@@ -1,5 +1,7 @@
 # Introduction
-TODO
+This repository contains an Erlang library implementation of the [Shared
+MIME Info
+Specification](https://freedesktop.org/wiki/Specifications/shared-mime-info-spec/).
 
 # Build
 You can build the library with:

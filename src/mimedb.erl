@@ -13,3 +13,20 @@
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 -module(mimedb).
+
+-export([locate_db/0]).
+
+-spec locate_db() -> {ok, file:filename()} | error.
+locate_db() ->
+  F = fun (Filename) -> filelib:is_regular(Filename) end,
+  case lists:search(F, possible_db_paths()) of
+    {value, Filename} ->
+      {ok, Filename};
+    false ->
+      error
+  end.
+
+-spec possible_db_paths() -> [file:filename()].
+possible_db_paths() ->
+  ["/usr/share/mime/packages/freedesktop.org.xml", %% Linux
+   "/opt/homebrew/share/mime/packages/freedesktop.org.xml"]. %% Homebrew MacOS

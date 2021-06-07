@@ -16,6 +16,21 @@
 
 -export([locate_db/0]).
 
+-export_type([mimetype/0,
+              extension/0, type/0, media_type/0, subtype/0, comment/0]).
+
+-type mimetype() :: #{extensions => [extension()],
+                      type => type(),
+                      media_type => media_type(),
+                      subtype => subtype(),
+                      comment => comment()}.
+
+-type extension() :: binary().
+-type type() :: binary().
+-type media_type() :: binary().
+-type subtype() :: binary().
+-type comment() :: #{binary() => binary()}.
+
 -spec locate_db() -> {ok, file:filename()} | error.
 locate_db() ->
   F = fun (Filename) -> filelib:is_regular(Filename) end,

@@ -39,7 +39,7 @@ locate_db() ->
       error
   end.
 
--spec open() -> term().
+-spec open() -> {ok, [mimetype()]} | error | {error, term()}.
 open() ->
   case locate_db() of
     {ok, Filename} ->
@@ -48,7 +48,7 @@ open() ->
       error
   end.
 
--spec open(file:filename()) -> term().
+-spec open(file:filename()) -> {ok, [mimetype()]} | error | {error, term()}.
 open(Filename) ->
   case file:read_file(Filename) of
     {ok, File} ->
@@ -73,7 +73,7 @@ parse_mime_info(#xmlElement{name = 'mime-info', content = Elements}) ->
 
 -spec parse_mime_types([xmerl_scan:xmlElement()], term()) -> term().
 parse_mime_types([], Acc) ->
-  lists:reverse(Acc);
+  {ok, lists:reverse(Acc)};
 parse_mime_types([#xmlElement{name = 'mime-type'} = Element | T], Acc) ->
   MimeType = parse_mime_type(Element),
   parse_mime_types(T, [MimeType | Acc]);

@@ -13,7 +13,7 @@
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 {application, mimedb,
- [{description, ""},
+ [{description, "Shared MIME info specification for Erlang"},
   {vsn, "git"},
   {registered,
    [mimedb_sup]},

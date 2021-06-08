@@ -12,20 +12,14 @@
 %% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-{application, mimedb,
- [{description, ""},
-  {vsn, "git"},
-  {registered,
-   [mimedb_sup]},
-  {mod, {mimedb_app, []}},
-  {applications,
-   [kernel,
-    stdlib,
-    xmerl
-   ]},
-  {env,[]},
-  {modules, []},
+-module(mimedb_app).
 
-  {licenses, ["ISC"]},
-  {links, []}
- ]}.
+-behaviour(application).
+
+-export([start/2, stop/1]).
+
+start(_StartType, _Args) ->
+  mimedb_sup:start_link().
+
+stop(_State) ->
+  ok.

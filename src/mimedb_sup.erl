@@ -12,20 +12,18 @@
 %% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-{application, mimedb,
- [{description, ""},
-  {vsn, "git"},
-  {registered,
-   [mimedb_sup]},
-  {mod, {mimedb_app, []}},
-  {applications,
-   [kernel,
-    stdlib,
-    xmerl
-   ]},
-  {env,[]},
-  {modules, []},
+-module(mimedb_sup).
 
-  {licenses, ["ISC"]},
-  {links, []}
- ]}.
+-behaviour(supervisor).
+
+-export([start_link/0, init/1]).
+
+start_link() ->
+  supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+
+init([]) ->
+  Children = [],
+  Flags = #{strategy => one_for_one,
+            intensity => 1,
+            period => 5},
+  {ok, {Flags, Children}}.

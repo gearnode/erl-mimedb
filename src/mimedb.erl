@@ -14,22 +14,20 @@
 
 -module(mimedb).
 
--export([locate_db/0]).
+-include_lib("xmerl/include/xmerl.hrl").
+
+-export([locate_db/0, open/0, open/1]).
 
 -export_type([mimetype/0,
-              extension/0, type/0, media_type/0, subtype/0, comment/0]).
+              extension/0, type/0, comment/0]).
 
 -type mimetype() :: #{extensions => [extension()],
                       type => type(),
-                      media_type => media_type(),
-                      subtype => subtype(),
                       comment => comment()}.
 
 -type extension() :: binary().
 -type type() :: binary().
--type media_type() :: binary().
--type subtype() :: binary().
--type comment() :: #{binary() => binary()}.
+-type comment() :: binary().
 
 -spec locate_db() -> {ok, file:filename()} | error.
 locate_db() ->
@@ -39,6 +37,87 @@ locate_db() ->
       {ok, Filename};
     false ->
       error
+  end.
+
+-spec open() -> term().
+open() ->
+  case locate_db() of
+    {ok, Filename} ->
+      open(Filename);
+    error ->
+      error
+  end.
+
+-spec open(file:filename()) -> term().
+open(Filename) ->
+  case file:read_file(Filename) of
+    {ok, File} ->
+      decode_file(binary_to_list(File));
+    {error, Reason} ->
+      {error, Reason}
+  end.
+
+-spec decode_file(string()) -> term().
+decode_file(File) ->
+  try 
+    {Document, _} = xmerl_scan:string(File),
+    parse_mime_info(Document)
+  catch
+    exit:Reason ->
+      {error, Reason}
+  end.
+
+-spec parse_mime_info(xmerl_scan:xmlElement()) -> term().
+parse_mime_info(#xmlElement{name = 'mime-info', content = Elements}) ->
+  parse_mime_types(Elements, []).
+
+-spec parse_mime_types([xmerl_scan:xmlElement()], term()) -> term().
+parse_mime_types([], Acc) ->
+  lists:reverse(Acc);
+parse_mime_types([#xmlElement{name = 'mime-type'} = Element | T], Acc) ->
+  MimeType = parse_mime_type(Element),
+  parse_mime_types(T, [MimeType | Acc]);
+parse_mime_types([_ | T], Acc) ->
+  parse_mime_types(T, Acc).
+
+-spec parse_mime_type(xmerl_scan:xmlElement()) -> mimetype().
+parse_mime_type(Element) ->
+  Type = find_type(Element),
+  construct_mime_type(Element#xmlElement.content, #{type => Type}).
+
+-spec construct_mime_type([xmerl_scan:xmlElement()], map()) -> mimetype().
+construct_mime_type([], Acc) ->
+  Acc;
+construct_mime_type([#xmlElement{name = glob,
+                                 attributes = Attributes} | T], Acc) ->
+  Extensions = maps:get(extensions, Acc, []),
+  F = fun (#xmlAttribute{name = pattern}) -> true;
+          (_) -> false
+      end,
+  case lists:search(F, Attributes) of
+    {value, Attribute} ->
+      Extension = iolist_to_binary(Attribute#xmlAttribute.value),
+      construct_mime_type(T, Acc#{extensions => [Extension | Extensions]});
+    false ->
+      construct_mime_type(T, Acc)
+  end;
+construct_mime_type([#xmlElement{name = comment,
+                                 attributes = [],
+                                 content = [Content]} | T], Acc) ->
+  Name = iolist_to_binary(Content#xmlText.value),
+  construct_mime_type(T, Acc#{comment => Name});
+construct_mime_type([_ | T], Acc) ->
+  construct_mime_type(T, Acc).
+
+find_type(#xmlElement{attributes = Attributes}) ->
+  F = fun (#xmlAttribute{name = type}) -> true;
+          (_) -> false
+      end,
+  case lists:search(F, Attributes) of
+    {value, Attribute} ->
+      iolist_to_binary(Attribute#xmlAttribute.value);
+    false ->
+      <<>>
   end.
 
 -spec possible_db_paths() -> [file:filename()].

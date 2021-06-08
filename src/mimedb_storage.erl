@@ -12,20 +12,27 @@
 %% ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 %% IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
--module(mimedb_sup).
+-module(mimedb_storage).
 
--behaviour(supervisor).
+-include_lib("kernel/include/logger.hrl").
 
--export([start_link/0, init/1]).
+-behaviour(gen_server).
 
-start_link() ->
-  supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+-export([init/1, handle_call/3, handle_cast/2]).
 
-init([]) ->
-  Options = application:get_env(mimedb, storage, #{}),
-  Child = #{id => mimedb,
-            start => {mimedb_storage, start_link, [Options]}},
-  Flags = #{strategy => one_for_one,
-            intensity => 1,
-            period => 5},
-  {ok, {Flags, [Child]}}.
+-export([start_link/1]).
+
+start_link(Options) ->
+  gen_server:start_link(?MODULE, [Options], []).
+
+init([Options]) ->
+  io:format("XXX ~p~n", [Options]),
+  {ok, #{}}.
+
+handle_call(Msg, From, State) ->
+  ?LOG_WARNING("unhandled call ~p from ~p", [Msg, From]),
+  {reply, unhandled, State}.
+
+handle_cast(Msg, State) ->
+  ?LOG_WARNING("unhandled cast ~p", [Msg]),
+  {noreply, State}.

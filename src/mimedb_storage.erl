@@ -18,6 +18,8 @@
 
 -behaviour(gen_server).
 
+-export([search_by_type/1, search_by_name/1]).
+
 -export([start_link/1,
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
@@ -30,6 +32,15 @@ search_by_type(Type) ->
   case ets:lookup(mimedb_data, Type) of
     [{_, Value}] ->
       {ok, Value};
+    [] ->
+      error
+  end.
+
+search_by_name(Name) ->
+  case ets:lookup(mimedb_name_index, Name) of
+    [{_, Key}] ->
+      [{_, Value}] = ets:lookup(mimedb_data, Key),
+      Value;
     [] ->
       error
   end.

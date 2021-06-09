@@ -87,14 +87,14 @@ handle_cast(Msg, State) ->
   {noreply, State}.
 
 load_file(<<>>, State) ->
-  case mimedb:open() of
+  case mimedb_parser:open() of
     {ok, Data} ->
       populate_db(Data, State);
     {error, Reason} ->
       {stop, Reason, State}
   end;
 load_file(Filename, State) ->
-  case mimedb:open(Filename) of
+  case mimedb_parser:open(Filename) of
     {ok, Data} ->
       populate_db(Data, State);
     {error, Reason} ->

@@ -18,15 +18,16 @@
 
 -behaviour(gen_server).
 
+-define(MIMEDB, mimedb_data).
+-define(MIMEDB_EXTENSION_INDEX, mimedb_extension_index).
+-define(MIMEDB_COMMENT_INDEX, mimedb_comment_index).
+
 -export([search_by_type/1, search_by_name/1]).
 
 -export([start_link/1,
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
 
--define(MIMEDB, mimedb_data).
--define(MIMEDB_EXTENSION_INDEX, mimedb_extension_index).
--define(MIMEDB_COMMENT_INDEX, mimedb_comment_index).
 
 search_by_type(Type) ->
   case ets:lookup(?MIMEDB, Type) of

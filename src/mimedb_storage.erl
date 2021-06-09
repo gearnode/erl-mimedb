@@ -25,6 +25,15 @@
 -define(DATA_DB, mimedb_data).
 -define(EXT_IDX, mimedb_extension_index).
 -define(NAME_IDX, mimedb_name_index).
+
+search_by_type(Type) ->
+  case ets:lookup(mimedb_data, Type) of
+    [{_, Value}] ->
+      {ok, Value};
+    [] ->
+      error
+  end.
+
 start_link(Options) ->
   gen_server:start_link(?MODULE, [Options], []).
 

@@ -14,7 +14,8 @@
 
 -module(mimedb).
 
--export([is_text/1, is_image/1, is_audio/1, is_video/1, has_same_family/2]).
+-export([is_text/1, is_image/1, is_audio/1, is_video/1,
+         has_same_family/2, equal/2]).
 
 -export_type([mimetype/0,
               extension/0, type/0, comment/0]).
@@ -52,3 +53,7 @@ has_same_family(#{type := Type1}, #{type := Type2}) ->
   [MediaType1, _] = binary:split(Type1, [<<$/>>]),
   [MediaType2, _] = binary:split(Type2, [<<$/>>]),
   MediaType1 =:= MediaType2.
+
+-spec equal(mimetype(), mimetype()) -> boolean().
+equal(#{type := Type1}, #{type := Type2}) ->
+  Type1 =:= Type2.

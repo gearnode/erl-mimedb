@@ -15,7 +15,7 @@
 -module(mimedb).
 
 -export([is_text/1, is_image/1, is_audio/1, is_video/1,
-         has_same_family/2, equal/2]).
+         is_child/2, equal/2]).
 
 -export_type([mimetype/0,
               extension/0, type/0, comment/0]).
@@ -49,11 +49,18 @@ is_video(#{type := Type}) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
   MediaType =:= <<"video">>.
 
--spec has_same_family(mimetype(), mimetype()) -> boolean().
-has_same_family(#{type := Type1}, #{type := Type2}) ->
-  [MediaType1, _] = binary:split(Type1, [<<$/>>]),
-  [MediaType2, _] = binary:split(Type2, [<<$/>>]),
-  MediaType1 =:= MediaType2.
+-spec is_child(binary(), binary()) -> boolean().
+is_child(Child, Parent) when Child =:= Parent ->
+  true;
+is_child(Child, Parent) ->
+  case mimedb_storage:search_by_type(Child) of
+    {ok, #{parents := Parents}} ->
+      lists:any(fun (P) -> is_child(P, Parent) end, Parents);
+    {ok, _} ->
+      false;
+    error ->
+      false
+  end.
 
 -spec equal(mimetype(), mimetype()) -> boolean().
 equal(#{type := Type1}, #{type := Type2}) ->

@@ -22,26 +22,29 @@
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
 
+-define(DATA_DB, mimedb_data).
+-define(EXT_IDX, mimedb_extension_index).
+-define(NAME_IDX, mimedb_name_index).
 start_link(Options) ->
   gen_server:start_link(?MODULE, [Options], []).
 
 init([Options]) ->
-  Filename = maps:get(filename, Options, <<>>),
-  EtsFlags = [ordered_set, named_table, {read_concurrency, true}],
-  Tab1 = ets:new(mimedb_data, EtsFlags),
-  Tab2 = ets:new(mimedb_extension_index, EtsFlags),
-  Tab3 = ets:new(mimedb_name_index, EtsFlags),
-  State = {Tab1, Tab2, Tab3},
-  {ok, State, {continue, {init, Filename}}}.
+  Flags = [public, ordered_set, named_table, {read_concurrency, true}],
+  ets:new(?DATA_DB, Flags),
+  ets:new(?EXT_IDX, Flags),
+  ets:new(?NAME_IDX, Flags),
+  {ok, #{options => Options}, {continue, init}}.
 
-terminate(_Reason, {Tab1, Tab2, Tab3}) ->
-  ets:delete(Tab1),
-  ets:delete(Tab2),
-  ets:delete(Tab3),
+terminate(_, _) ->
+  ets:delete(?DATA_DB),
+  ets:delete(?EXT_IDX),
+  ets:delete(?NAME_IDX),
   ok.
 
-handle_continue({init, Filename}, State) ->
+handle_continue(init, #{options := Options} = State) ->
+  Filename = maps:get(filename, Options, <<>>),
   load_file(Filename, State);
+
 handle_continue(Msg, State) ->
   ?LOG_WARNING("unhandled call ~p", [Msg]),
   {noreply, State}.
@@ -71,11 +74,11 @@ load_file(Filename, State) ->
 
 populate_db([], State) ->
   {noreply, State};
-populate_db([H | T], {Tab1, Tab2, Tab3} = State) ->
+populate_db([H | T], State) ->
   Key = maps:get(type, H),
-  ets:insert(Tab1, {Key, H}),
-  ets:insert(Tab2, {maps:get(comment, H), Key}),
+  ets:insert(?DATA_DB, {Key, H}),
+  ets:insert(?NAME_IDX, {maps:get(comment, H), Key}),
   lists:foreach(fun (Ext) ->
-                    ets:insert(Tab3, {Ext, Key})
+                    ets:insert(?EXT_IDX, {Ext, Key})
                 end, maps:get(extensions, H, [])),
   populate_db(T, State).

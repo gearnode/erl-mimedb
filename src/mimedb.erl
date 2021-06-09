@@ -22,6 +22,7 @@
 
 -type mimetype() :: #{extensions => [extension()],
                       type => type(),
+                      parents => [type()],
                       comment => comment()}.
 
 -type extension() :: binary().

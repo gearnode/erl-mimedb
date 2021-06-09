@@ -14,6 +14,8 @@
 
 -module(mimedb).
 
+-export([is_text/1, is_image/1, is_audio/1, is_video/1]).
+
 -export_type([mimetype/0,
               extension/0, type/0, comment/0]).
 
@@ -25,3 +27,22 @@
 -type type() :: binary().
 -type comment() :: binary().
 
+-spec is_text(mimetype()) -> boolean().
+is_text(#{type := Type}) ->
+  [MediaType, _] = binary:split(Type, [<<$/>>]),
+  MediaType =:= <<"text">>.
+
+-spec is_image(mimetype()) -> boolean().
+is_image(#{type := Type}) ->
+  [MediaType, _] = binary:split(Type, [<<$/>>]),
+  MediaType =:= <<"image">>.
+
+-spec is_audio(mimetype()) -> boolean().
+is_audio(#{type := Type}) ->
+  [MediaType, _] = binary:split(Type, [<<$/>>]),
+  MediaType =:= <<"audio">>.
+
+-spec is_video(mimetype()) -> boolean().
+is_video(#{type := Type}) ->
+  [MediaType, _] = binary:split(Type, [<<$/>>]),
+  MediaType =:= <<"video">>.

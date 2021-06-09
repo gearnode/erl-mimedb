@@ -24,12 +24,12 @@
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
 
--define(DATA_DB, mimedb_data).
--define(EXT_IDX, mimedb_extension_index).
--define(NAME_IDX, mimedb_name_index).
+-define(MIMEDB, mimedb_data).
+-define(MIMEDB_EXTENSION_INDEX, mimedb_extension_index).
+-define(MIMEDB_COMMENT_INDEX, mimedb_comment_index).
 
 search_by_type(Type) ->
-  case ets:lookup(?DATA_DB, Type) of
+  case ets:lookup(?MIMEDB, Type) of
     [{_, Value}] ->
       {ok, Value};
     [] ->
@@ -37,9 +37,9 @@ search_by_type(Type) ->
   end.
 
 search_by_name(Name) ->
-  case ets:lookup(?NAME_IDX, Name) of
+  case ets:lookup(?MIMEDB_COMMENT_INDEX, Name) of
     [{_, Key}] ->
-      [{_, Value}] = ets:lookup(?DATA_DB, Key),
+      [{_, Value}] = ets:lookup(?MIMEDB, Key),
       Value;
     [] ->
       error
@@ -50,15 +50,15 @@ start_link(Options) ->
 
 init([Options]) ->
   Flags = [public, ordered_set, named_table, {read_concurrency, true}],
-  ets:new(?DATA_DB, Flags),
-  ets:new(?EXT_IDX, Flags),
-  ets:new(?NAME_IDX, Flags),
+  ets:new(?MIMEDB, Flags),
+  ets:new(?MIMEDB_COMMENT_INDEX, Flags),
+  ets:new(?MIMEDB_EXTENSION_INDEX, Flags),
   {ok, #{options => Options}, {continue, init}}.
 
 terminate(_, _) ->
-  ets:delete(?DATA_DB),
-  ets:delete(?EXT_IDX),
-  ets:delete(?NAME_IDX),
+  ets:delete(?MIMEDB),
+  ets:delete(?MIMEDB_COMMENT_INDEX),
+  ets:delete(?MIMEDB_EXTENSION_INDEX),
   ok.
 
 handle_continue(init, #{options := Options} = State) ->
@@ -96,9 +96,9 @@ populate_db([], State) ->
   {noreply, State};
 populate_db([H | T], State) ->
   Key = maps:get(type, H),
-  ets:insert(?DATA_DB, {Key, H}),
-  ets:insert(?NAME_IDX, {maps:get(comment, H), Key}),
-  lists:foreach(fun (Ext) ->
-                    ets:insert(?EXT_IDX, {Ext, Key})
-                end, maps:get(extensions, H, [])),
+  ets:insert(?MIMEDB, {Key, H}),
+  ets:insert(?MIMEDB_COMMENT_INDEX, {maps:get(comment, H), Key}),
+  lists:foreach(
+    fun (Ext) -> ets:insert(?MIMEDB_EXTENSION_INDEX, {Ext, Key}) end,
+    maps:get(extensions, H, [])),
   populate_db(T, State).

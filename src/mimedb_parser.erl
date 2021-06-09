@@ -104,6 +104,19 @@ construct_mime_type([#xmlElement{name = comment,
                                  content = [Content]} | T], Acc) ->
   Name = iolist_to_binary(Content#xmlText.value),
   construct_mime_type(T, Acc#{comment => Name});
+construct_mime_type([#xmlElement{name = 'sub-class-of',
+                                 attributes = Attributes} | T], Acc) ->
+  Parents = maps:get(parents, Acc, []),
+  F = fun (#xmlAttribute{name = type}) -> true;
+          (_) -> false
+      end,
+  case lists:search(F, Attributes) of
+    {value, Attribute} ->
+      Parent = iolist_to_binary(Attribute#xmlAttribute.value),
+      construct_mime_type(T, Acc#{parents => [Parent | Parents]});
+    false ->
+      construct_mime_type(T, Acc)
+  end;
 construct_mime_type([_ | T], Acc) ->
   construct_mime_type(T, Acc).
 

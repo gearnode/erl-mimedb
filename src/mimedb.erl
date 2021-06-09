@@ -29,28 +29,37 @@
 -type type() :: binary().
 -type comment() :: binary().
 
--spec is_text(mimetype()) -> boolean().
+-spec is_text(mimetype() | type()) -> boolean().
 is_text(#{type := Type}) ->
+  is_text(Type);
+is_text(Type) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
-  MediaType =:= <<"text">>.
   MediaType =:= <<"text">> orelse is_child(Type, <<"text/plain">>).
 
--spec is_image(mimetype()) -> boolean().
+-spec is_image(mimetype() | type()) -> boolean().
 is_image(#{type := Type}) ->
+  is_image(Type);
+is_image(Type) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
   MediaType =:= <<"image">>.
 
--spec is_audio(mimetype()) -> boolean().
+-spec is_audio(mimetype() | type()) -> boolean().
 is_audio(#{type := Type}) ->
+  is_audio(Type);
+is_audio(Type) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
   MediaType =:= <<"audio">>.
 
--spec is_video(mimetype()) -> boolean().
+-spec is_video(mimetype() | type()) -> boolean().
 is_video(#{type := Type}) ->
+  is_video(Type);
+is_video(Type) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
   MediaType =:= <<"video">>.
 
--spec is_child(binary(), binary()) -> boolean().
+-spec is_child(mimetype() | type(), mimetype() | type()) -> boolean().
+is_child(#{type := Child}, #{type := Parent}) ->
+  is_child(Child, Parent);
 is_child(Child, Parent) when Child =:= Parent ->
   true;
 is_child(Child, Parent) ->
@@ -63,6 +72,8 @@ is_child(Child, Parent) ->
       false
   end.
 
--spec equal(mimetype(), mimetype()) -> boolean().
+-spec equal(mimetype() | type(), mimetype() | type()) -> boolean().
 equal(#{type := Type1}, #{type := Type2}) ->
+  equal(Type1, Type2);
+equal(Type1, Type2) ->
   Type1 =:= Type2.

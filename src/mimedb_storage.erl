@@ -29,7 +29,7 @@
 -define(NAME_IDX, mimedb_name_index).
 
 search_by_type(Type) ->
-  case ets:lookup(mimedb_data, Type) of
+  case ets:lookup(?DATA_DB, Type) of
     [{_, Value}] ->
       {ok, Value};
     [] ->
@@ -37,9 +37,9 @@ search_by_type(Type) ->
   end.
 
 search_by_name(Name) ->
-  case ets:lookup(mimedb_name_index, Name) of
+  case ets:lookup(?NAME_IDX, Name) of
     [{_, Key}] ->
-      [{_, Value}] = ets:lookup(mimedb_data, Key),
+      [{_, Value}] = ets:lookup(?DATA_DB, Key),
       Value;
     [] ->
       error

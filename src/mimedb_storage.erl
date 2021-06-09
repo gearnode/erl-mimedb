@@ -24,10 +24,14 @@
 
 -export([search_by_type/1, search_by_name/1]).
 
+-export([reload/1]).
+
 -export([start_link/1,
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
 
+reload(Ref) ->
+  gen_server:cast(Ref, reload).
 
 search_by_type(Type) ->
   case ets:lookup(?MIMEDB, Type) of
@@ -73,6 +77,10 @@ handle_continue(Msg, State) ->
 handle_call(Msg, From, State) ->
   ?LOG_WARNING("unhandled call ~p from ~p", [Msg, From]),
   {reply, unhandled, State}.
+
+handle_cast(reload, #{options := Options} = State) ->
+  Filename = maps:get(filename, Options, <<>>),
+  load_file(Filename, State);
 
 handle_cast(Msg, State) ->
   ?LOG_WARNING("unhandled cast ~p", [Msg]),

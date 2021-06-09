@@ -49,7 +49,7 @@ start_link(Options) ->
   gen_server:start_link(?MODULE, [Options], []).
 
 init([Options]) ->
-  Flags = [public, ordered_set, named_table, {read_concurrency, true}],
+  Flags = [protected, ordered_set, named_table, {read_concurrency, true}],
   ets:new(?MIMEDB, Flags),
   ets:new(?MIMEDB_COMMENT_INDEX, Flags),
   ets:new(?MIMEDB_EXTENSION_INDEX, Flags),

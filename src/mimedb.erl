@@ -47,7 +47,7 @@ is_video(#{type := Type}) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
   MediaType =:= <<"video">>.
 
--spec has_same_family(Parrent :: mimetype(), mimetype()) -> boolean().
+-spec has_same_family(mimetype(), mimetype()) -> boolean().
 has_same_family(#{type := Type1}, #{type := Type2}) ->
   [MediaType1, _] = binary:split(Type1, [<<$/>>]),
   [MediaType2, _] = binary:split(Type2, [<<$/>>]),

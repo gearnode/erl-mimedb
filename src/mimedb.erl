@@ -33,6 +33,7 @@
 is_text(#{type := Type}) ->
   [MediaType, _] = binary:split(Type, [<<$/>>]),
   MediaType =:= <<"text">>.
+  MediaType =:= <<"text">> orelse is_child(Type, <<"text/plain">>).
 
 -spec is_image(mimetype()) -> boolean().
 is_image(#{type := Type}) ->

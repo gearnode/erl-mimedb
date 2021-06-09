@@ -23,7 +23,7 @@ start_link() ->
 
 init([]) ->
   Options = application:get_env(mimedb, storage, #{}),
-  Child = #{id => mimedb,
+  Child = #{id => mimedb_default,
             start => {mimedb_storage, start_link, [Options]}},
   Flags = #{strategy => one_for_one,
             intensity => 1,

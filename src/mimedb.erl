@@ -31,6 +31,10 @@
 
 -type comment() :: binary().
 
+-spec find_by_name(comment(), et_gen_server:ref()) -> {ok, mimetype()} | error.
+find_by_name(Name, Database) ->
+  mimedb_storage:search_by_name(Database, Name).
+
 -spec is_text(mimetype() | type()) -> boolean().
 is_text(#{type := Type}) ->
   is_text(Type);

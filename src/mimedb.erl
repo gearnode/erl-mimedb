@@ -18,7 +18,7 @@
          find_by_type/2, get_by_type/2, get_by_type/3]).
 
 -export([is_text/1, is_image/1, is_audio/1, is_video/1,
-         is_child/2, is_child/3, equal/2]).
+         is_child/2, equal/2]).
 
 -export_type([mimetype/0,
               extension/0, type/0, comment/0]).

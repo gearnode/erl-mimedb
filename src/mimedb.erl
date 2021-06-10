@@ -109,7 +109,7 @@ is_child(#{type := Child}, #{type := Parent}) ->
 is_child(Child, Parent) when Child =:= Parent ->
   true;
 is_child(Child, Parent) ->
-  case mimedb_storage:search_by_type(Child) of
+  case find_by_type(Child, mimedb_default) of
     {ok, #{parents := Parents}} ->
       lists:any(fun (P) -> is_child(P, Parent) end, Parents);
     {ok, _} ->

@@ -29,6 +29,58 @@ with_db(Tests) ->
    end,
    Tests}.
 
+find_by_name_test_() ->
+  with_db(
+    [?_assertMatch(
+        {ok, _},
+        mimedb:find_by_name(<<"JSON document">>, mimedb_default)),
+     ?_assertMatch(
+        error,
+        mimedb:find_by_name(<<"kjaslkjasdjlkj">>, mimedb_default))]).
+
+get_by_name_test_() ->
+  with_db(
+    [?_assertMatch(
+        #{comment := <<"JSON document">>},
+        mimedb:get_by_name(<<"JSON document">>, mimedb_default)),
+     ?_assertException(
+        error,
+        {unknown_mimetype, <<"foo">>},
+        mimedb:get_by_name(<<"foo">>, mimedb_default)),
+
+     ?_assertMatch(
+        #{comment := <<"JSON document">>},
+        mimedb:get_by_name(<<"JSON document">>, mimedb_default, #{})),
+     ?_assertMatch(
+        #{},
+        mimedb:get_by_name(<<"foo">>, mimedb_default, #{}))]).
+
+find_by_type_test_() ->
+  with_db(
+    [?_assertMatch(
+        {ok, _},
+        mimedb:find_by_type(<<"application/json">>, mimedb_default)),
+     ?_assertMatch(
+        error,
+        mimedb:find_by_type(<<"kjaslkjasdjlkj">>, mimedb_default))]).
+
+get_by_type_test_() ->
+  with_db(
+    [?_assertMatch(
+        #{comment := <<"JSON document">>},
+        mimedb:get_by_type(<<"application/json">>, mimedb_default)),
+     ?_assertException(
+        error,
+        {unknown_mimetype, <<"foo">>},
+        mimedb:get_by_type(<<"foo">>, mimedb_default)),
+
+     ?_assertMatch(
+        #{comment := <<"JSON document">>},
+        mimedb:get_by_type(<<"application/json">>, mimedb_default, #{})),
+     ?_assertMatch(
+        #{},
+        mimedb:get_by_type(<<"foo">>, mimedb_default, #{}))]).
+
 is_text_test_() ->
   with_db(
     [?_assert(mimedb:is_text(#{type => <<"text/plain">>})),

@@ -20,13 +20,15 @@
 -export_type([mimetype/0,
               extension/0, type/0, comment/0]).
 
--type mimetype() :: #{extensions => [extension()],
-                      type => type(),
+-type mimetype() :: #{extensions := [extension()],
+                      type := type(),
                       parents => [type()],
-                      comment => comment()}.
+                      comment := comment()}.
 
 -type extension() :: binary().
+
 -type type() :: binary().
+
 -type comment() :: binary().
 
 -spec is_text(mimetype() | type()) -> boolean().

@@ -68,9 +68,9 @@ handle_continue(Msg, State) ->
 -spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
         et_gen_server:handle_call_ret(state()).
 handle_call({by_name, Name}, _, #{store := {T1, T2, _}} = State) ->
-  case ets:lookup(T1, Name) of
+  case ets:lookup(T2, Name) of
     [{_, Key}] ->
-      [{_, Value}] = ets:lookup(T2, Key),
+      [{_, Value}] = ets:lookup(T1, Key),
       {reply, Value, State};
     [] ->
       {reply, error, State}

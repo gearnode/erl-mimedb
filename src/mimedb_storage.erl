@@ -18,54 +18,45 @@
 
 -behaviour(gen_server).
 
--define(MIMEDB, mimedb_data).
--define(MIMEDB_EXTENSION_INDEX, mimedb_extension_index).
--define(MIMEDB_COMMENT_INDEX, mimedb_comment_index).
-
--export([search_by_type/1, search_by_name/1]).
-
--export([reload/1]).
+-export([search_by_type/2, search_by_name/2]).
 
 -export([start_link/1,
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
 
-reload(Ref) ->
-  gen_server:cast(Ref, reload).
+-type state() :: #{options := term(),
+                   store := {ets:tab(), ets:tab(), ets:tab()}}.
 
-search_by_type(Type) ->
-  case ets:lookup(?MIMEDB, Type) of
-    [{_, Value}] ->
-      {ok, Value};
-    [] ->
-      error
-  end.
+-spec search_by_type(et_gen_server:ref(), mimedb:type()) ->
+        {ok, mimedb:mimetype()} | error.
+search_by_type(Ref, Type) ->
+  gen_server:call(Ref, {by_type, Type}).
 
-search_by_name(Name) ->
-  case ets:lookup(?MIMEDB_COMMENT_INDEX, Name) of
-    [{_, Key}] ->
-      [{_, Value}] = ets:lookup(?MIMEDB, Key),
-      Value;
-    [] ->
-      error
-  end.
+-spec search_by_name(et_gen_server:ref(), mimedb:comment()) ->
+        {ok, mimedb:mimetype()} | error.
+search_by_name(Ref, Name) ->
+  gen_server:call(Ref, {by_name, Name}).
 
 start_link(Options) ->
   gen_server:start_link(?MODULE, [Options], []).
 
+-spec init(list()) -> et_gen_server:init_ret(state()).
 init([Options]) ->
-  Flags = [protected, ordered_set, named_table, {read_concurrency, true}],
-  ets:new(?MIMEDB, Flags),
-  ets:new(?MIMEDB_COMMENT_INDEX, Flags),
-  ets:new(?MIMEDB_EXTENSION_INDEX, Flags),
-  {ok, #{options => Options}, {continue, init}}.
+  Flags = [private, ordered_set, {read_concurrency, true}],
+  T1 = ets:new(mimedb, Flags),
+  T2 = ets:new(mimedb_comment_index, Flags),
+  T3 = ets:new(mimedb_extension_index, Flags),
+  {ok, #{store => {T1, T2, T3}, options => Options}, {continue, init}}.
 
-terminate(_, _) ->
-  ets:delete(?MIMEDB),
-  ets:delete(?MIMEDB_COMMENT_INDEX),
-  ets:delete(?MIMEDB_EXTENSION_INDEX),
+-spec terminate(et_gen_server:terminate_reason(), state()) -> ok.
+terminate(_, #{store := {T1, T2, T3}}) ->
+  ets:delete(T1),
+  ets:delete(T2),
+  ets:delete(T3),
   ok.
 
+-spec handle_continue(term(), state()) ->
+        et_gen_server:handle_continue_ret(state()).
 handle_continue(init, #{options := Options} = State) ->
   Filename = maps:get(filename, Options, <<>>),
   load_file(Filename, State);
@@ -74,18 +65,36 @@ handle_continue(Msg, State) ->
   ?LOG_WARNING("unhandled call ~p", [Msg]),
   {noreply, State}.
 
+-spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
+        et_gen_server:handle_call_ret(state()).
+handle_call({by_name, Name}, _, #{store := {T1, T2, _}} = State) ->
+  case ets:lookup(T1, Name) of
+    [{_, Key}] ->
+      [{_, Value}] = ets:lookup(T2, Key),
+      {reply, Value, State};
+    [] ->
+      {reply, error, State}
+  end;
+
+handle_call({by_type, Type}, _, #{store := {T1, _, _}} = State) ->
+  case ets:lookup(T1, Type) of
+    [{_, Value}] ->
+      {reply, {ok, Value}, State};
+    [] ->
+      {reply, error, State}
+  end;
+
 handle_call(Msg, From, State) ->
   ?LOG_WARNING("unhandled call ~p from ~p", [Msg, From]),
   {reply, unhandled, State}.
 
-handle_cast(reload, #{options := Options} = State) ->
-  Filename = maps:get(filename, Options, <<>>),
-  load_file(Filename, State);
-
+-spec handle_cast(term(), state()) -> et_gen_server:handle_cast_ret(state()).
 handle_cast(Msg, State) ->
   ?LOG_WARNING("unhandled cast ~p", [Msg]),
   {noreply, State}.
 
+-spec load_file(binary(), state()) ->
+        et_gen_server:handle_continue_ret(state()).
 load_file(<<>>, State) ->
   case mimedb_parser:open() of
     {ok, Data} ->
@@ -101,13 +110,15 @@ load_file(Filename, State) ->
       {stop, Reason, State}
   end.
 
+-spec populate_db([mimedb:mimetype()], state()) ->
+        et_gen_server:handle_continue_ret(state()).
 populate_db([], State) ->
   {noreply, State};
-populate_db([H | T], State) ->
+populate_db([H | T], #{store := {T1, T2, T3}} = State) ->
   Key = maps:get(type, H),
-  ets:insert(?MIMEDB, {Key, H}),
-  ets:insert(?MIMEDB_COMMENT_INDEX, {maps:get(comment, H), Key}),
+  ets:insert(T1, {Key, H}),
+  ets:insert(T2, {maps:get(comment, H), Key}),
   lists:foreach(
-    fun (Ext) -> ets:insert(?MIMEDB_EXTENSION_INDEX, {Ext, Key}) end,
+    fun (Ext) -> ets:insert(T3, {Ext, Key}) end,
     maps:get(extensions, H, [])),
   populate_db(T, State).

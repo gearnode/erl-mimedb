@@ -16,12 +16,26 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+with_db(Tests) ->
+  {setup,
+   fun () ->
+       {ok, _} = application:ensure_all_started(mimedb),
+       ok
+   end,
+   fun (_) ->
+       error_logger:tty(false),
+       ok = application:stop(mimedb),
+       error_logger:tty(true)
+   end,
+   Tests}.
+
 is_text_test_() ->
-  [?_assert(mimedb:is_text(#{type => <<"text/plain">>})),
-   ?_assert(mimedb:is_text(#{type => <<"text/html">>})),
-   ?_assertNot(mimedb:is_text(#{type => <<"application/json">>})),
-   ?_assertNot(mimedb:is_text(#{type => <<"video/3gpp">>})),
-   ?_assertNot(mimedb:is_text(#{type => <<"image/png">>}))].
+  with_db(
+    [?_assert(mimedb:is_text(#{type => <<"text/plain">>})),
+     ?_assert(mimedb:is_text(#{type => <<"text/html">>})),
+     ?_assert(mimedb:is_text(#{type => <<"application/json">>})),
+     ?_assertNot(mimedb:is_text(#{type => <<"video/3gpp">>})),
+     ?_assertNot(mimedb:is_text(#{type => <<"image/png">>}))]).
 
 is_image_test_() ->
   [?_assert(mimedb:is_image(#{type => <<"image/png">>})),

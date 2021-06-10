@@ -71,7 +71,7 @@ handle_call({by_name, Name}, _, #{store := {T1, T2, _}} = State) ->
   case ets:lookup(T2, Name) of
     [{_, Key}] ->
       [{_, Value}] = ets:lookup(T1, Key),
-      {reply, Value, State};
+      {reply, {ok, Value}, State};
     [] ->
       {reply, error, State}
   end;

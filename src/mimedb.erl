@@ -53,6 +53,10 @@ get_by_name(Name, Database, Default) ->
       Default
   end.
 
+-spec find_by_type(type(), et_gen_server:ref()) -> {ok, mimetype()} | error.
+find_by_type(Name, Database) ->
+  mimedb_storage:search_by_type(Database, Name).
+
 -spec is_text(mimetype() | type()) -> boolean().
 is_text(#{type := Type}) ->
   is_text(Type);

@@ -18,7 +18,7 @@
 
 -behaviour(gen_server).
 
--export([search_by_type/2, search_by_name/2]).
+-export([search_by_type/2, search_by_name/2, search_by_extension/2]).
 
 -export([start_link/2,
          init/1, terminate/2,
@@ -36,6 +36,11 @@ search_by_type(Ref, Type) ->
         {ok, mimedb:mimetype()} | error.
 search_by_name(Ref, Name) ->
   gen_server:call(Ref, {by_name, Name}, infinity).
+
+-spec search_by_extension(et_gen_server:ref(), mimedb:extension()) ->
+        {ok, mimedb:mimetype()} | error.
+search_by_extension(Ref, Extension) ->
+  gen_server:call(Ref, {by_extension, Extension}, infinity).
 
 start_link(Name, Options) ->
   gen_server:start_link(Name, ?MODULE, [Options], []).
@@ -79,6 +84,15 @@ handle_call({by_name, Name}, _, #{store := {T1, T2, _}} = State) ->
 handle_call({by_type, Type}, _, #{store := {T1, _, _}} = State) ->
   case ets:lookup(T1, Type) of
     [{_, Value}] ->
+      {reply, {ok, Value}, State};
+    [] ->
+      {reply, error, State}
+  end;
+
+handle_call({by_extension, Extension}, _, #{store := {T1, _, T2}} = State) ->
+  case ets:lookup(T2, Extension) of
+    [{_, Key}] ->
+      [{_, Value}] = ets:lookup(T1, Key),
       {reply, {ok, Value}, State};
     [] ->
       {reply, error, State}

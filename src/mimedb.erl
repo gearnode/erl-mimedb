@@ -15,7 +15,8 @@
 -module(mimedb).
 
 -export([find_by_name/2, get_by_name/2, get_by_name/3,
-         find_by_type/2, get_by_type/2, get_by_type/3]).
+         find_by_type/2, get_by_type/2, get_by_type/3,
+         find_by_extension/2, get_by_extension/2, get_by_extension/3]).
 
 -export([is_text/1, is_image/1, is_audio/1, is_video/1,
          is_child/2, equal/2]).
@@ -72,6 +73,30 @@ get_by_type(Type, Database) ->
 -spec get_by_type(type(), et_gen_server:ref(), mimetype()) -> mimetype().
 get_by_type(Type, Database, Default) ->
   case find_by_type(Type, Database) of
+    {ok, Value} ->
+      Value;
+    error ->
+      Default
+  end.
+
+-spec find_by_extension(extension(), et_gen_server:ref()) ->
+        {ok, mimetype()} | error.
+find_by_extension(Name, Database) ->
+  mimedb_storage:search_by_extension(Database, Name).
+
+-spec get_by_extension(extension(), et_gen_server:ref()) -> mimetype().
+get_by_extension(Extension, Database) ->
+  case find_by_extension(Extension, Database) of
+    {ok, Value} ->
+      Value;
+    error ->
+      error({unknown_mimeextension, Extension})
+  end.
+
+-spec get_by_extension(extension(), et_gen_server:ref(), mimetype()) ->
+        mimetype().
+get_by_extension(Extension, Database, Default) ->
+  case find_by_extension(Extension, Database) of
     {ok, Value} ->
       Value;
     error ->

@@ -66,6 +66,15 @@ get_by_type(Type, Database) ->
       error({unknown_mimetype, Type})
   end.
 
+-spec get_by_type(type(), et_gen_server:ref(), mimetype()) -> mimetype().
+get_by_type(Type, Database, Default) ->
+  case find_by_type(Type, Database) of
+    {ok, Value} ->
+      Value;
+    error ->
+      Default
+  end.
+
 -spec is_text(mimetype() | type()) -> boolean().
 is_text(#{type := Type}) ->
   is_text(Type);

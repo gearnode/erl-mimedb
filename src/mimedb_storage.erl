@@ -20,7 +20,7 @@
 
 -export([search_by_type/2, search_by_name/2]).
 
--export([start_link/1,
+-export([start_link/2,
          init/1, terminate/2,
          handle_continue/2, handle_call/3, handle_cast/2]).
 
@@ -30,15 +30,15 @@
 -spec search_by_type(et_gen_server:ref(), mimedb:type()) ->
         {ok, mimedb:mimetype()} | error.
 search_by_type(Ref, Type) ->
-  gen_server:call(Ref, {by_type, Type}).
+  gen_server:call(Ref, {by_type, Type}, infinity).
 
 -spec search_by_name(et_gen_server:ref(), mimedb:comment()) ->
         {ok, mimedb:mimetype()} | error.
 search_by_name(Ref, Name) ->
-  gen_server:call(Ref, {by_name, Name}).
+  gen_server:call(Ref, {by_name, Name}, infinity).
 
-start_link(Options) ->
-  gen_server:start_link(?MODULE, [Options], []).
+start_link(Name, Options) ->
+  gen_server:start_link(Name, ?MODULE, [Options], []).
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
 init([Options]) ->

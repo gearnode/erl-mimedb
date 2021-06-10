@@ -57,6 +57,15 @@ get_by_name(Name, Database, Default) ->
 find_by_type(Name, Database) ->
   mimedb_storage:search_by_type(Database, Name).
 
+-spec get_by_type(type(), et_gen_server:ref()) -> mimetype().
+get_by_type(Type, Database) ->
+  case find_by_type(Type, Database) of
+    {ok, Value} ->
+      Value;
+    error ->
+      error({unknown_mimetype, Type})
+  end.
+
 -spec is_text(mimetype() | type()) -> boolean().
 is_text(#{type := Type}) ->
   is_text(Type);

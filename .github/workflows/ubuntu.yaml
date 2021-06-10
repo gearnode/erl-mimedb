@@ -32,9 +32,7 @@ jobs:
           sudo install -m 0755 rebar3 /usr/local/bin/rebar3
       - name: "Installing dependencies"
         run: |
-          sudo echo "tzdata tzdata/Areas select Europe" | debconf-set-selections
-          sudo echo "tzdata tzdata/Zones/Europe select Paris" | debconf-set-selections
-          sudo DEBIAN_FRONTEND="noninteractive" apt-get install -y shared-mime-info
+          sudo apt-get install -y shared-mime-info
       - name: "Running dialyzer"
         run: |
           make dialyzer

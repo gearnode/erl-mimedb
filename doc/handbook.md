@@ -21,5 +21,4 @@ Specification](https://freedesktop.org/wiki/Specifications/shared-mime-info-spec
 
 List of the not supported features:
 - Weight on the mimetype extension
-- Real glob maching on the mimetype extension
 - Match by magic byte

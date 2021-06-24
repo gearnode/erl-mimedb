@@ -94,16 +94,8 @@ construct_mime_type([#xmlElement{name = glob,
       end,
   case lists:search(F, Attributes) of
     {value, Attribute} ->
-      %% As Erlang/OTP does not expose glob matching API I filter mimetype
-      %% pattern to be only "*.ext". Maybe one day I try to work on a real
-      %% matching.
       Pattern = iolist_to_binary(Attribute#xmlAttribute.value),
-      case re:split(Pattern, "^\\*\\.([^\\[\\]]+)$", [{return, binary}]) of
-        [<<>>, Extension, <<>>] ->
-          construct_mime_type(T, Acc#{extensions => [Extension | Extensions]});
-        _ ->
-          construct_mime_type(T, Acc)
-      end;
+      construct_mime_type(T, Acc#{extensions => [Pattern | Extensions]});
     false ->
       construct_mime_type(T, Acc)
   end;

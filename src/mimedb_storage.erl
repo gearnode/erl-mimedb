@@ -117,7 +117,7 @@ handle_call({by_extension, Extension}, _, State) ->
     Query = ["SELECT mt.type, parents, comment, GROUP_CONCAT(extension,';')"
              " FROM mime_types mt"
              " LEFT JOIN extensions e ON mt.type = e.type"
-             " WHERE e.extension = ?1",
+             " WHERE ?1 GLOB e.extension",
              " GROUP BY mt.type",
              " LIMIT 1"],
     case query(Query, [{text, Extension}], State) of

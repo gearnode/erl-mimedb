@@ -85,7 +85,7 @@ find_by_extension_test_() ->
   with_db(
     [?_assertMatch(
         {ok, _},
-        mimedb:find_by_extension(<<"json">>, mimedb_default)),
+        mimedb:find_by_extension(<<".json">>, mimedb_default)),
      ?_assertMatch(
         error,
         mimedb:find_by_extension(<<"kjaslkjasdjlkj">>, mimedb_default))]).
@@ -94,7 +94,7 @@ get_by_extension_test_() ->
   with_db(
     [?_assertMatch(
         #{comment := <<"JSON document">>},
-        mimedb:get_by_extension(<<"json">>, mimedb_default)),
+        mimedb:get_by_extension(<<".json">>, mimedb_default)),
      ?_assertException(
         error,
         {unknown_mimeextension, <<"foo">>},
@@ -102,7 +102,7 @@ get_by_extension_test_() ->
 
      ?_assertMatch(
         #{comment := <<"JSON document">>},
-        mimedb:get_by_extension(<<"json">>, mimedb_default, #{})),
+        mimedb:get_by_extension(<<".json">>, mimedb_default, #{})),
      ?_assertMatch(
         #{},
         mimedb:get_by_extension(<<"foo">>, mimedb_default, #{}))]).

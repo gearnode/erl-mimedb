@@ -22,7 +22,8 @@
    [kernel,
     stdlib,
     xmerl,
-    et
+    et,
+    sqlite
    ]},
   {env,[]},
   {modules, []},

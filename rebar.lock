@@ -1,4 +1,8 @@
 [{<<"et">>,
   {git,"https://github.com/galdor/erl-et.git",
        {ref,"7b55d59e3ef75bbd6ea4126d3855046e639709a6"}},
+  0},
+ {<<"sqlite">>,
+  {git,"https://github.com/exograd/erl-sqlite.git",
+       {ref,"0fb8c2e612e6067c83d2b668ad18e018eaea62d4"}},
   0}].

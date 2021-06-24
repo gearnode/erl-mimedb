@@ -195,7 +195,7 @@ load_file(Filename, State) ->
         et_gen_server:handle_continue_ret(state()).
 populate_db([], State) ->
   {noreply, State};
-populate_db([H | T], #{db := Ref} = State) ->
+populate_db([H | T], State) ->
   try
     insert(H, State),
     populate_db(T, State)

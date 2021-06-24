@@ -206,7 +206,7 @@ populate_db([H | T], State) ->
 
 insert(MimeType, State) ->
   Query1 = ["INSERT INTO mime_types (type, parents, comment)",
-           " VALUES (?1, ?2, ?3)"],
+            " VALUES (?1, ?2, ?3)"],
   Parameters1 =
     [{text, maps:get(type, MimeType)},
      {text, iolist_to_binary(lists:join($;, maps:get(parents, MimeType, [])))},

@@ -24,7 +24,7 @@
 -export_type([mimetype/0,
               extension/0, type/0, comment/0]).
 
--type mimetype() :: #{extensions := [extension()],
+-type mimetype() :: #{extensions => [extension()],
                       type := type(),
                       parents => [type()],
                       comment := comment()}.

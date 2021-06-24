@@ -25,7 +25,7 @@
          handle_continue/2, handle_call/3, handle_cast/2]).
 
 -type state() :: #{options := term(),
-                   store := {ets:tab(), ets:tab(), ets:tab()}}.
+                   db := sqlite_database:ref()}.
 
 -spec search_by_type(et_gen_server:ref(), mimedb:type()) ->
         {ok, mimedb:mimetype()} | error.
@@ -47,22 +47,24 @@ start_link(Name, Options) ->
 
 -spec init(list()) -> et_gen_server:init_ret(state()).
 init([Options]) ->
-  Flags = [private, ordered_set, {read_concurrency, true}],
-  T1 = ets:new(mimedb, Flags),
-  T2 = ets:new(mimedb_comment_index, Flags),
-  T3 = ets:new(mimedb_extension_index, Flags),
-  {ok, #{store => {T1, T2, T3}, options => Options}, {continue, init}}.
+  try
+    Ref = open_database(),
+    State = #{db => Ref, options => Options},
+    update_schema(State),
+    {ok, State, {continue, import}}
+  catch
+    throw:{error, Reason} ->
+      {stop, Reason}
+  end.
 
 -spec terminate(et_gen_server:terminate_reason(), state()) -> ok.
-terminate(_, #{store := {T1, T2, T3}}) ->
-  ets:delete(T1),
-  ets:delete(T2),
-  ets:delete(T3),
+terminate(_, #{db := Ref}) ->
+  sqlite:close(Ref),
   ok.
 
 -spec handle_continue(term(), state()) ->
         et_gen_server:handle_continue_ret(state()).
-handle_continue(init, #{options := Options} = State) ->
+handle_continue(import, #{options := Options} = State) ->
   Filename = maps:get(filename, Options, <<>>),
   load_file(Filename, State);
 
@@ -72,30 +74,61 @@ handle_continue(Msg, State) ->
 
 -spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
         et_gen_server:handle_call_ret(state()).
-handle_call({by_name, Name}, _, #{store := {T1, T2, _}} = State) ->
-  case ets:lookup(T2, Name) of
-    [{_, Key}] ->
-      [{_, Value}] = ets:lookup(T1, Key),
-      {reply, {ok, Value}, State};
-    [] ->
-      {reply, error, State}
+handle_call({by_name, Name}, _, State) ->
+  try
+    Query = ["SELECT mt.type, parents, comment, GROUP_CONCAT(extension,';')"
+             " FROM mime_types mt"
+             " LEFT JOIN extensions e ON mt.type = e.type"
+             " WHERE comment = ?1",
+             " GROUP BY mt.type",
+             " LIMIT 1"],
+    case query(Query, [{text, Name}], State) of
+      [] ->
+        {reply, error, State};
+      [Row] ->
+        {reply, {ok, decode_row(Row)}, State}
+    end
+  catch
+    throw:{error, Reason} ->
+      error(Reason)
   end;
 
-handle_call({by_type, Type}, _, #{store := {T1, _, _}} = State) ->
-  case ets:lookup(T1, Type) of
-    [{_, Value}] ->
-      {reply, {ok, Value}, State};
-    [] ->
-      {reply, error, State}
+handle_call({by_type, Type}, _, State) ->
+  try
+    Query = ["SELECT mt.type, parents, comment, GROUP_CONCAT(extension,';')"
+             " FROM mime_types mt"
+             " LEFT JOIN extensions e ON mt.type = e.type"
+             " WHERE mt.type = ?1",
+             " GROUP BY mt.type",
+             " LIMIT 1"],
+    case query(Query, [{text, Type}], State) of
+      [] ->
+        {reply, error, State};
+      [Row] ->
+        {reply, {ok, decode_row(Row)}, State}
+    end
+  catch
+    throw:{error, Reason} ->
+      error(Reason)
   end;
 
-handle_call({by_extension, Extension}, _, #{store := {T1, _, T2}} = State) ->
-  case ets:lookup(T2, Extension) of
-    [{_, Key}] ->
-      [{_, Value}] = ets:lookup(T1, Key),
-      {reply, {ok, Value}, State};
-    [] ->
-      {reply, error, State}
+handle_call({by_extension, Extension}, _, State) ->
+  try
+    Query = ["SELECT mt.type, parents, comment, GROUP_CONCAT(extension,';')"
+             " FROM mime_types mt"
+             " LEFT JOIN extensions e ON mt.type = e.type"
+             " WHERE e.extension = ?1",
+             " GROUP BY mt.type",
+             " LIMIT 1"],
+    case query(Query, [{text, Extension}], State) of
+      [] ->
+        {reply, error, State};
+      [Row] ->
+        {reply, {ok, decode_row(Row)}, State}
+    end
+  catch
+    throw:{error, Reason} ->
+      error(Reason)
   end;
 
 handle_call(Msg, From, State) ->
@@ -106,6 +139,40 @@ handle_call(Msg, From, State) ->
 handle_cast(Msg, State) ->
   ?LOG_WARNING("unhandled cast ~p", [Msg]),
   {noreply, State}.
+
+-spec open_database() -> sqlite_database:ref().
+open_database() ->
+  case sqlite:open(<<":memory:">>, #{}) of
+    {ok, Ref} ->
+      Ref;
+    {error, Reason} ->
+      throw({error, {open, Reason}})
+  end.
+
+-spec update_schema(state()) -> ok.
+update_schema(State) ->
+  Queries =
+    [["PRAGMA foreign_keys = ON"],
+     ["CREATE TABLE mime_types",
+      "  (type TEXT PRIMARY KEY,",
+      "   parents TEXT,",
+      "   comment TEXT NOT NULL)"],
+     ["CREATE TABLE extensions",
+      "  (extension TEXT NOT NULL,",
+      "   type TEXT,",
+      "   FOREIGN KEY(type) REFERENCES mime_types(type))"],
+     ["CREATE INDEX extensions_extension_idx",
+      "  ON extensions(extension)"]],
+  lists:foreach(fun (Query) -> query(Query, [], State) end, Queries).
+
+-spec query(sqlite:query(), [sqlite:parameter()], state()) -> [sqlite:row()].
+query(Query, Parameters, #{db := Ref}) ->
+  case sqlite:query(Ref, Query, Parameters) of
+    {ok, Rows} ->
+      Rows;
+    {error, Reason} ->
+      throw({error, {query, Reason, Query}})
+  end.
 
 -spec load_file(binary(), state()) ->
         et_gen_server:handle_continue_ret(state()).
@@ -128,11 +195,36 @@ load_file(Filename, State) ->
         et_gen_server:handle_continue_ret(state()).
 populate_db([], State) ->
   {noreply, State};
-populate_db([H | T], #{store := {T1, T2, T3}} = State) ->
-  Key = maps:get(type, H),
-  ets:insert(T1, {Key, H}),
-  ets:insert(T2, {maps:get(comment, H), Key}),
-  lists:foreach(
-    fun (Ext) -> ets:insert(T3, {Ext, Key}) end,
-    maps:get(extensions, H, [])),
-  populate_db(T, State).
+populate_db([H | T], #{db := Ref} = State) ->
+  try
+    insert(H, State),
+    populate_db(T, State)
+  catch
+    throw:{error, Reason} ->
+      error(Reason)
+  end.
+
+insert(MimeType, State) ->
+  Query1 = ["INSERT INTO mime_types (type, parents, comment)",
+           " VALUES (?1, ?2, ?3)"],
+  Parameters1 =
+    [{text, maps:get(type, MimeType)},
+     {text, iolist_to_binary(lists:join($;, maps:get(parents, MimeType, [])))},
+     {text, maps:get(comment, MimeType)}],
+  query(Query1, Parameters1, State),
+
+  Query2 = ["INSERT INTO extensions (extension, type)",
+            " VALUES (?1, ?2)"],
+
+  lists:foreach(fun (Extension) ->
+                    Parameters2 =
+                      [{text, Extension},
+                       {text, maps:get(type, MimeType)}],
+                    query(Query2, Parameters2, State)
+                end, maps:get(extensions, MimeType, [])).
+
+decode_row([Type, Parents, Comment, Extensions]) ->
+  #{type => Type,
+    parents => binary:split(Parents, <<$;>>, [global]),
+    comment => Comment,
+    extensions => binary:split(Extensions, <<$;>>, [global])}.

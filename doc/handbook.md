@@ -19,6 +19,9 @@ The library implement a subset of the [version
 of the [Shared MIME Info
 Specification](https://freedesktop.org/wiki/Specifications/shared-mime-info-spec/).
 
-List of the not supported features:
-- Weight on the mimetype extension
-- Match by magic byte
+**Unsupported:**
+- Magic byte matching
+- Pattern weight
+- Multifile for the same database
+
+

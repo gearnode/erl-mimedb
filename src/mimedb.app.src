@@ -16,7 +16,7 @@
  [{description, "Shared MIME info specification for Erlang"},
   {vsn, "git"},
   {registered,
-   [mimedb_sup]},
+   [mimedb_sup, mimedb_default]},
   {mod, {mimedb_app, []}},
   {applications,
    [kernel,

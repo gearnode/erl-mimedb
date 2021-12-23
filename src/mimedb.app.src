@@ -22,7 +22,7 @@
    [kernel,
     stdlib,
     xmerl,
-    et,
+    core,
     sqlite
    ]},
   {env,[]},

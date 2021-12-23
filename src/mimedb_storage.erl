@@ -27,17 +27,17 @@
 -type state() :: #{options := term(),
                    db := sqlite_database:ref()}.
 
--spec search_by_type(et_gen_server:ref(), mimedb:type()) ->
+-spec search_by_type(c_gen_server:ref(), mimedb:type()) ->
         {ok, mimedb:mimetype()} | error.
 search_by_type(Ref, Type) ->
   gen_server:call(Ref, {by_type, Type}, infinity).
 
--spec search_by_name(et_gen_server:ref(), mimedb:comment()) ->
+-spec search_by_name(c_gen_server:ref(), mimedb:comment()) ->
         {ok, mimedb:mimetype()} | error.
 search_by_name(Ref, Name) ->
   gen_server:call(Ref, {by_name, Name}, infinity).
 
--spec search_by_extension(et_gen_server:ref(), mimedb:extension()) ->
+-spec search_by_extension(c_gen_server:ref(), mimedb:extension()) ->
         {ok, mimedb:mimetype()} | error.
 search_by_extension(Ref, Extension) ->
   gen_server:call(Ref, {by_extension, Extension}, infinity).
@@ -45,7 +45,7 @@ search_by_extension(Ref, Extension) ->
 start_link(Name, Options) ->
   gen_server:start_link(Name, ?MODULE, [Options], []).
 
--spec init(list()) -> et_gen_server:init_ret(state()).
+-spec init(list()) -> c_gen_server:init_ret(state()).
 init([Options]) ->
   try
     Ref = open_database(),
@@ -57,13 +57,13 @@ init([Options]) ->
       {stop, Reason}
   end.
 
--spec terminate(et_gen_server:terminate_reason(), state()) -> ok.
+-spec terminate(c_gen_server:terminate_reason(), state()) -> ok.
 terminate(_, #{db := Ref}) ->
   sqlite:close(Ref),
   ok.
 
 -spec handle_continue(term(), state()) ->
-        et_gen_server:handle_continue_ret(state()).
+        c_gen_server:handle_continue_ret(state()).
 handle_continue(import, #{options := Options} = State) ->
   Filename = maps:get(filename, Options, <<>>),
   load_file(Filename, State);
@@ -72,8 +72,8 @@ handle_continue(Msg, State) ->
   ?LOG_WARNING("unhandled call ~p", [Msg]),
   {noreply, State}.
 
--spec handle_call(term(), {pid(), et_gen_server:request_id()}, state()) ->
-        et_gen_server:handle_call_ret(state()).
+-spec handle_call(term(), {pid(), c_gen_server:request_id()}, state()) ->
+        c_gen_server:handle_call_ret(state()).
 handle_call({by_name, Name}, _, State) ->
   try
     Query = ["SELECT mt.type, parents, comment, GROUP_CONCAT(extension,';')"
@@ -135,7 +135,7 @@ handle_call(Msg, From, State) ->
   ?LOG_WARNING("unhandled call ~p from ~p", [Msg, From]),
   {reply, unhandled, State}.
 
--spec handle_cast(term(), state()) -> et_gen_server:handle_cast_ret(state()).
+-spec handle_cast(term(), state()) -> c_gen_server:handle_cast_ret(state()).
 handle_cast(Msg, State) ->
   ?LOG_WARNING("unhandled cast ~p", [Msg]),
   {noreply, State}.
@@ -175,7 +175,7 @@ query(Query, Parameters, #{db := Ref}) ->
   end.
 
 -spec load_file(binary(), state()) ->
-        et_gen_server:handle_continue_ret(state()).
+        c_gen_server:handle_continue_ret(state()).
 load_file(<<>>, State) ->
   case mimedb_parser:open() of
     {ok, Data} ->
@@ -192,7 +192,7 @@ load_file(Filename, State) ->
   end.
 
 -spec populate_db([mimedb:mimetype()], state()) ->
-        et_gen_server:handle_continue_ret(state()).
+        c_gen_server:handle_continue_ret(state()).
 populate_db([], State) ->
   {noreply, State};
 populate_db([H | T], State) ->

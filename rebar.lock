@@ -1,8 +1,8 @@
-[{<<"et">>,
-  {git,"https://github.com/galdor/erl-et.git",
-       {ref,"7b55d59e3ef75bbd6ea4126d3855046e639709a6"}},
+[{<<"core">>,
+  {git,"https://github.com/exograd/erl-core.git",
+       {ref,"036df26f7b869cf2c1fd66c559a748657f3f2da3"}},
   0},
  {<<"sqlite">>,
   {git,"https://github.com/exograd/erl-sqlite.git",
-       {ref,"0fb8c2e612e6067c83d2b668ad18e018eaea62d4"}},
+       {ref,"2b7eafca016ffce9b3a27ff9f1cf85535da9c839"}},
   0}].

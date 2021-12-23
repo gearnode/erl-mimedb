@@ -35,11 +35,11 @@
 
 -type comment() :: binary().
 
--spec find_by_name(comment(), et_gen_server:ref()) -> {ok, mimetype()} | error.
+-spec find_by_name(comment(), c_gen_server:ref()) -> {ok, mimetype()} | error.
 find_by_name(Name, Database) ->
   mimedb_storage:search_by_name(Database, Name).
 
--spec get_by_name(comment(), et_gen_server:ref()) -> mimetype().
+-spec get_by_name(comment(), c_gen_server:ref()) -> mimetype().
 get_by_name(Name, Database) ->
   case find_by_name(Name, Database) of
     {ok, Value} ->
@@ -48,7 +48,7 @@ get_by_name(Name, Database) ->
       error({unknown_mimetype, Name})
   end.
 
--spec get_by_name(comment(), et_gen_server:ref(), mimetype()) -> mimetype().
+-spec get_by_name(comment(), c_gen_server:ref(), mimetype()) -> mimetype().
 get_by_name(Name, Database, Default) ->
   case find_by_name(Name, Database) of
     {ok, Value} ->
@@ -57,11 +57,11 @@ get_by_name(Name, Database, Default) ->
       Default
   end.
 
--spec find_by_type(type(), et_gen_server:ref()) -> {ok, mimetype()} | error.
+-spec find_by_type(type(), c_gen_server:ref()) -> {ok, mimetype()} | error.
 find_by_type(Name, Database) ->
   mimedb_storage:search_by_type(Database, Name).
 
--spec get_by_type(type(), et_gen_server:ref()) -> mimetype().
+-spec get_by_type(type(), c_gen_server:ref()) -> mimetype().
 get_by_type(Type, Database) ->
   case find_by_type(Type, Database) of
     {ok, Value} ->
@@ -70,7 +70,7 @@ get_by_type(Type, Database) ->
       error({unknown_mimetype, Type})
   end.
 
--spec get_by_type(type(), et_gen_server:ref(), mimetype()) -> mimetype().
+-spec get_by_type(type(), c_gen_server:ref(), mimetype()) -> mimetype().
 get_by_type(Type, Database, Default) ->
   case find_by_type(Type, Database) of
     {ok, Value} ->
@@ -79,12 +79,12 @@ get_by_type(Type, Database, Default) ->
       Default
   end.
 
--spec find_by_extension(extension(), et_gen_server:ref()) ->
+-spec find_by_extension(extension(), c_gen_server:ref()) ->
         {ok, mimetype()} | error.
 find_by_extension(Name, Database) ->
   mimedb_storage:search_by_extension(Database, Name).
 
--spec get_by_extension(extension(), et_gen_server:ref()) -> mimetype().
+-spec get_by_extension(extension(), c_gen_server:ref()) -> mimetype().
 get_by_extension(Extension, Database) ->
   case find_by_extension(Extension, Database) of
     {ok, Value} ->
@@ -93,7 +93,7 @@ get_by_extension(Extension, Database) ->
       error({unknown_mimeextension, Extension})
   end.
 
--spec get_by_extension(extension(), et_gen_server:ref(), mimetype()) ->
+-spec get_by_extension(extension(), c_gen_server:ref(), mimetype()) ->
         mimetype().
 get_by_extension(Extension, Database, Default) ->
   case find_by_extension(Extension, Database) of

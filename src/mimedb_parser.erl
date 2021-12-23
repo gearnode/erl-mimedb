@@ -55,7 +55,7 @@ open(Filename) ->
 -spec decode_file(string()) ->
         {ok, [mimedb:mimetype()]} | {error, error_reason()}.
 decode_file(File) ->
-  try 
+  try
     {Document, _} = xmerl_scan:string(File),
     {ok, parse_mime_info(Document)}
   catch
@@ -133,5 +133,6 @@ find_type(#xmlElement{attributes = Attributes}) ->
 
 -spec possible_db_paths() -> [file:filename()].
 possible_db_paths() ->
-  ["/usr/share/mime/packages/freedesktop.org.xml", %% Linux
+  ["/usr/local/share/mime/packages/freedesktop.org.xml", %% FreeBSD
+   "/usr/share/mime/packages/freedesktop.org.xml", %% Linux
    "/opt/homebrew/share/mime/packages/freedesktop.org.xml"]. %% Homebrew MacOS
